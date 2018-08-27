@@ -44,6 +44,6 @@ public class BodtApp {
 
 		frame.setVisible(true);
 		//System.out.println("終了処理中");
-		//db.Commit();
+		db.Commit();
 	}
 }

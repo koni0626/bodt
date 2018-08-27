@@ -133,7 +133,7 @@ public class BodtTrainDataTable {
 
 	/**
 	 * 訓練データを削除する
-	 * @param TrainDataID 削除する訓練データのID
+	 * @param ImageID 削除する画像のID
 	 * @return 0  削除できた
 	 *          -1 削除失敗
 	 */
@@ -145,6 +145,30 @@ public class BodtTrainDataTable {
 		{
 			stmt = m_Con.prepareStatement("delete from TrainDataTable where ImageID = ?");
 			stmt.setInt(1 , ImageID);
+			stmt.executeUpdate();
+		}
+		catch(SQLException e)
+		{
+			nRet = -1;
+			e.printStackTrace();
+		}
+		return nRet;
+	}
+
+	/**
+	 * 訓練データを削除する
+	 * @param TrainDataID 削除する訓練データのID
+	 * @return 0  削除できた
+	 *          -1 削除失敗
+	 */
+	public int DeleteTrainData(int TrainDataID)
+	{
+		int nRet = 0;
+		PreparedStatement stmt = null;
+		try
+		{
+			stmt = m_Con.prepareStatement("delete from TrainDataTable where TrainDataID = ?");
+			stmt.setInt(1 , TrainDataID);
 			stmt.executeUpdate();
 		}
 		catch(SQLException e)
@@ -261,7 +285,7 @@ public class BodtTrainDataTable {
 		}
 		return NextImageID;
 	}
-	
+
 	/**
 	 * 指定したイメージIDより大きな画像で、指定されたカテゴリIDがある次の画像を探す
 	 * @param ImageID

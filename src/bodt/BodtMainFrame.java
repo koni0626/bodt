@@ -142,6 +142,16 @@ public class BodtMainFrame extends JFrame implements KeyListener{
 		});
 		menu.add(CatExportItem);
 
+		JMenuItem SaveItem = new JMenuItem("プロジェクトを保存する");
+		SaveItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				/* 学習データをエクスポートするを選んだ場合 */
+				BodtApp.db.Commit();
+				JOptionPane.showMessageDialog(null, "コミットしました");
+			}
+		});
+		menu.add(SaveItem);
+
 		/*******************************************************/
 		/*                   左側のパネル作成                  */
 		/*******************************************************/

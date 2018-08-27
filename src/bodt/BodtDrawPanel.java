@@ -455,6 +455,7 @@ public class BodtDrawPanel extends JPanel implements MouseListener,MouseMotionLi
 				 JPopupMenu popup = new JPopupMenu();
 				 /* カテゴリ一覧を取得する */
 				 List<String> CategoryList = BodtApp.db.GetCategoryTable().SelectAll();
+				 CategoryList.add("@削除@");
 				 for(String s:CategoryList)
 				 {
 					 /* カテゴリをメニューに全部追加 */
@@ -472,7 +473,8 @@ public class BodtDrawPanel extends JPanel implements MouseListener,MouseMotionLi
 					 popup.add(Menu);
 				 }
 				 /* ポップアップ表示 */
-			      popup.show(c, x, y);
+				 popup.show(c, x, y);
+				 break;
 			}
 		}
 	}
@@ -808,12 +810,22 @@ public class BodtDrawPanel extends JPanel implements MouseListener,MouseMotionLi
 		double h = Double.valueOf(Tokens[3]);
 		String strCatName = Tokens[4];
 
-		/* メニューアイテム名からカテゴリIDを取得する */
-		int CategoryID = BodtApp.db.GetCategoryTable().GetCategoryID(strCatName);
 		/* トレーニングデータのIDを取得する */
 		int nTrainDataID = BodtApp.db.GetTrainDataTable().SelectTrainID(m_ImageID, x, y, w, h);
-		/* 訓練データベースに画像IDとカテゴリIDと座標を登録する */
-		BodtApp.db.GetTrainDataTable().Update(nTrainDataID,CategoryID);
+		int CategoryID = -1;
+
+		if(strCatName.compareTo("@削除@") != 0)
+		{
+			/* メニューアイテム名からカテゴリIDを取得する */
+			CategoryID = BodtApp.db.GetCategoryTable().GetCategoryID(strCatName);
+			/* 訓練データベースに画像IDとカテゴリIDと座標を登録する */
+			BodtApp.db.GetTrainDataTable().Update(nTrainDataID,CategoryID);
+		}
+		else
+		{
+			/* 選択したIDをデリートする */
+			BodtApp.db.GetTrainDataTable().DeleteTrainData(nTrainDataID);
+		}
 
 		/* コミット矩形を拡大する */
 		List<BodtObjectData> ObjectList = BodtApp.db.GetTrainDataTable().Select(m_ImageID);
@@ -831,7 +843,7 @@ public class BodtDrawPanel extends JPanel implements MouseListener,MouseMotionLi
 			m_RenderRect.add(data);
 		}
 
-		BodtApp.db.Commit();
+		//BodtApp.db.Commit();
 
 		repaint();
 	}
