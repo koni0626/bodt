@@ -270,7 +270,18 @@ public class BodtDB {
 					}
 					BufferedImage cutimg = img.getSubimage((int)x, (int)y, (int)w, (int)h);
 					String strUUID = UUID.randomUUID().toString();
-					String FullPath = String.format("%s/%04d/%s.jpg",strOutputDir,nCat-1,strUUID);
+					String extFileName = imgTable.SelectImageFileName(nImageID);
+					String FullPath = "";
+					extFileName = extFileName.toUpperCase();
+					if(extFileName.endsWith(".JPG") ||extFileName.endsWith(".JPEG")) {
+						FullPath = String.format("%s/%04d/%s.jpg",strOutputDir,nCat-1,strUUID);
+					}
+					else if(extFileName.endsWith(".PNG")) {
+						FullPath = String.format("%s/%04d/%s.png",strOutputDir,nCat-1,strUUID);
+					}
+					else if(extFileName.endsWith(".GIF")) {
+						FullPath = String.format("%s/%04d/%s.gif",strOutputDir,nCat-1,strUUID);
+					}
 					SaveImage(cutimg,FullPath);
 					SetExportInfo(nProgress,FullPath+"をエクスポートしました");
 
@@ -361,13 +372,28 @@ public class BodtDB {
 			for(int ImageID = 1; ImageID <= MaxID; ImageID++)
 			{
 				strUUID = UUID.randomUUID().toString();
-				String strJpgName = "./"+strYoloExportDirName+"/data/"+strUUID+".jpg";
-				String FullPathJpg = strDataDir + "/" + strUUID+".jpg";
+
+				String strJpgName = "./"+strYoloExportDirName+"/data/"+strUUID;
+				String FullPathJpg = strDataDir + "/" + strUUID;
 				String FullPathTxt =  strDataDir + "/" + strUUID+".txt";
 
 
 				/* 画像テーブルから画像データを取得する */
 				BufferedImage image = ImgTbl.SelectImage(ImageID);
+				String extFileName = ImgTbl.SelectImageFileName(ImageID);
+				extFileName = extFileName.toUpperCase();
+				if(extFileName.endsWith(".JPG") ||extFileName.endsWith(".JPEG")) {
+					strJpgName = strJpgName + ".jpg";
+					FullPathJpg = FullPathJpg + ".jpg";
+				}
+				else if(extFileName.endsWith(".PNG")) {
+					strJpgName = strJpgName + ".png";
+					FullPathJpg = FullPathJpg + ".png";
+				}
+				else if(extFileName.endsWith(".GIF")) {
+					strJpgName = strJpgName + ".gif";
+					FullPathJpg = FullPathJpg + ".gif";
+				}
 
 
 				/* 座標データを出力する */
@@ -435,7 +461,17 @@ public class BodtDB {
 		try
 		{
 			OutputStream out=new FileOutputStream(strJpgName);//ファイルとアプリを繋ぐ
-			ImageIO.write(image, "jpg", out);//指定の形式で出力
+			String extFileName = strJpgName.toUpperCase();
+			if(extFileName.endsWith(".JPG") ||extFileName.endsWith(".JPEG")) {
+				ImageIO.write(image, "jpg", out);//指定の形式で出力
+			}
+			else if(extFileName.endsWith(".PNG")) {
+				ImageIO.write(image, "png", out);//指定の形式で出力
+			}
+			else if(extFileName.endsWith(".GIF")) {
+				ImageIO.write(image, "gif", out);//指定の形式で出力
+			}
+
 
 		}
 		catch(IOException e)

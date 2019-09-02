@@ -125,7 +125,17 @@ public class BodtImageTable {
 			stmt.setString(2,ImageFileName);
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
 
-			ImageIO.write(img, "jpg", os);
+			//ファイル名の拡張子を取得
+			String filename = ImageFileName.toUpperCase();
+			if(filename.endsWith(".JPG") ||filename.endsWith(".JPEG")) {
+				ImageIO.write(img, "jpg", os);
+			}
+			else if(filename.endsWith(".PNG")) {
+				ImageIO.write(img, "png", os);
+			}
+			else if(filename.endsWith(".GIF")) {
+				ImageIO.write(img, "gif", os);
+			}
 			os.flush();
 			byte[] imageInByte = os.toByteArray();
 			os.close();
@@ -177,11 +187,22 @@ public class BodtImageTable {
 	{
 		int nRet = 0;
 		PreparedStatement stmt = null;
+		String ImageFileName = SelectImageFileName(nImageID);
 		try
 		{
 			// 一度byte配列へ変換
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			ImageIO.write( ImageData, "jpg", baos );
+			String filename = ImageFileName.toUpperCase();
+			if(filename.endsWith(".JPG") ||filename.endsWith(".JPEG")) {
+				ImageIO.write(ImageData, "jpg", baos);
+			}
+			else if(filename.endsWith(".PNG")) {
+				ImageIO.write(ImageData, "png", baos);
+			}
+			else if(filename.endsWith(".GIF")) {
+				ImageIO.write(ImageData, "gif", baos);
+			}
+			//ImageIO.write( ImageData, "jpg", baos );
 			baos.flush();
 			byte[] imageInByte = baos.toByteArray();
 			baos.close();
@@ -300,6 +321,36 @@ public class BodtImageTable {
 		}
 
 		return img;
+	}
+
+	/**
+	 * 指定されたIDの画像ファイル名を取得する
+	 * @param nImageID ImageTableのImageID
+	 * @return :正常時は画像のBufferedImage
+	 *           異常時はnull
+	 */
+	public String SelectImageFileName(int nImageID)
+	{
+		BufferedImage img = null;
+		PreparedStatement stmt = null;
+		String filename = "";
+
+		try
+		{
+			stmt = m_Con.prepareStatement("select FullPathFileName from ImageTable where ImageID=?");
+			stmt.setInt(1,nImageID);
+			ResultSet rs = stmt.executeQuery();
+			filename = rs.getString(1);
+
+
+		}
+		catch (SQLException e)
+		{
+			// TODO 自動生成された catch ブロック
+			e.printStackTrace();
+		}
+
+		return filename;
 	}
 
 	/**
