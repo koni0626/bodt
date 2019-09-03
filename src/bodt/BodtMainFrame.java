@@ -419,7 +419,7 @@ public class BodtMainFrame extends JFrame implements KeyListener{
 			boolean bDupChk = false;
 			for(String s:CatList)
 			{
-				if(s.equalsIgnoreCase(strCategory))
+				if(s.equals(strCategory))
 				{
 					/* すでに追加済みのカテゴリ */
 					bDupChk = true;
