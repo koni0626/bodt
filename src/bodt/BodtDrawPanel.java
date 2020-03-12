@@ -360,8 +360,24 @@ public class BodtDrawPanel extends JPanel implements MouseListener,MouseMotionLi
 		}
 		Point NowPoint = e.getPoint();
 
+		/* 万一オーバーしていた時のストッパー */
+		if(NowPoint.x > m_RenderImg.getWidth()) {
+			NowPoint.x = m_RenderImg.getWidth();
+		}
+		if(NowPoint.x < 0) {
+			NowPoint.x = 0;
+		}
+
+		if(NowPoint.y > m_RenderImg.getHeight()) {
+			NowPoint.y = m_RenderImg.getHeight();
+		}
+		if( NowPoint.y < 0) {
+			NowPoint.y = 0;
+		}
+		/************ここまで***************/
 		m_DrawRect.width = NowPoint.x - m_DrawRect.x;
 		m_DrawRect.height =NowPoint.y -  m_DrawRect.y;
+
 		repaint();
 	}
 
@@ -614,7 +630,6 @@ public class BodtDrawPanel extends JPanel implements MouseListener,MouseMotionLi
 		m_OriginalImg = outBuff;
 		image_table.Update(m_ImageID, m_OriginalImg);
 		BodtApp.db.Commit();
-		System.out.println(m_OriginalImg.getWidth());
 		m_RenderImg = ImageScale(m_OriginalImg,m_Scale);
 		repaint();
 	}
@@ -653,6 +668,23 @@ public class BodtDrawPanel extends JPanel implements MouseListener,MouseMotionLi
 		BodtTrainDataTable train_table = BodtApp.db.GetTrainDataTable();
 		//System.out.println(diff);
 		Rectangle2D.Double r = RectScale(m_DrawRect,1.0/m_Scale);
+
+		Rectangle2D.Double AbsRect = (Rectangle2D.Double)m_DrawRect.clone();
+		if(r.width < 0)
+		{
+			r.x = r.x + r.width;
+			r.width = Math.abs(r.width);
+			m_DrawRect.x = m_DrawRect.x + m_DrawRect.width;
+			m_DrawRect.width =  Math.abs(m_DrawRect.width);
+
+		}
+		if(r.height < 0)
+		{
+			r.y = r.y + r.height;
+			r.height = Math.abs(r.height);
+			m_DrawRect.y = m_DrawRect.y + m_DrawRect.height;
+			m_DrawRect.height =  Math.abs(m_DrawRect.height);
+		}
 
 		/* トレーニングデータの登録する。カテゴリは未確定のため-1を指定する */
 		train_table.Insert(m_ImageID, -1, r.x, r.y, r.width, r.height);

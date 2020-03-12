@@ -28,6 +28,7 @@ public class BodtExportDialog extends JDialog{
 	private int m_ExportKind;
 	public static final int EXPORT_YOLO = 0;
 	public static final int EXPORT_CLASS = 1;
+	public static final int EXPORT_M2DET = 2;
 	/**
 	 * Launch the application.
 	 */
@@ -126,6 +127,11 @@ public class BodtExportDialog extends JDialog{
 										System.out.println("recordnum:"+nFileNum);
 										m_ProgressBar.setMaximum(nFileNum);
 										BodtApp.db.ExportDBToClass(strOutputDir);
+										break;
+									case EXPORT_M2DET:
+										nFileNum = BodtApp.db.GetImageTable().GetMaxImageID();
+										m_ProgressBar.setMaximum(nFileNum);
+										BodtApp.db.ExportDBToM2Det(strOutputDir);
 										break;
 
 									default:

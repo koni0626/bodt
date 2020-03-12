@@ -133,6 +133,15 @@ public class BodtMainFrame extends JFrame implements KeyListener{
 		});
 		menu.add(YoloExportItem);
 
+		JMenuItem M2DetExportItem = new JMenuItem("M2Det用の学習データセットをエクスポートする");
+		M2DetExportItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				/* 学習データをエクスポートするを選んだ場合 */
+				OnOpenM2DetExportDialog();
+			}
+		});
+		menu.add(M2DetExportItem);
+
 		JMenuItem CatExportItem = new JMenuItem("領域選択した画像をカテゴリごとに保存する");
 		CatExportItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -382,10 +391,26 @@ public class BodtMainFrame extends JFrame implements KeyListener{
 			e.printStackTrace();
 		}
 	}
+
+
 	private void OnOpenCatExportDialog()
 	{
 		try {
 			BodtExportDialog dialog = new BodtExportDialog(BodtExportDialog.EXPORT_CLASS,"切り出し画像のエクスポート");
+			dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+			dialog.setModal(true);
+			dialog.setVisible(true);
+			/* ここで画像表示とか行う */
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+
+	private void OnOpenM2DetExportDialog()
+	{
+		try {
+			BodtExportDialog dialog = new BodtExportDialog(BodtExportDialog.EXPORT_M2DET,"M2Det用学習データのエクスポート");
 			dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			dialog.setModal(true);
 			dialog.setVisible(true);

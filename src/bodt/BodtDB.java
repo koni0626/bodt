@@ -402,6 +402,8 @@ public class BodtDB {
 				{
 					/* コール元ダイアログに表示するための画像ファイル名をセットする */
 					SetExportInfo(ImageID,strJpgName+"はスキップします");
+					File text = new File(FullPathTxt);
+					text.delete();
 					continue;
 				}
 				else
@@ -448,6 +450,155 @@ public class BodtDB {
 		return nRet;
 	}
 
+	/**
+	 * M2Det学習用のデータセットをエクスポートする
+	 * @param strOutputDir 出力先ディレクトリ
+	 * @return :0正常
+	 *          -1失敗
+	 */
+	public int ExportDBToM2Det(String strOutputDir)
+	{
+		int nRet = 0;
+		String strDataDir = strOutputDir + "/data";
+		String strCfgDir = strOutputDir + "/cfg";
+		String strBkDir = strOutputDir + "/backup";
+		String strClassList = strCfgDir + "/basis.names";
+		String strCfgFile = strCfgDir + "/basis.data";
+		String strYoloExportDirName = "";
+
+		if(m_Con == null)
+		{
+			JOptionPane.showMessageDialog(null, "データベースを作成するか，オープンしてください");
+			return -1;
+		}
+		Random rnd = new Random();
+
+		/** 以下の内容を出力する
+		 * ./data/画像.jpg
+		 * ./data/画像.txt
+		 * ./data/basis.names(クラスリスト)
+		 * ./train.txt
+		 * ./test.txt
+		 * ./cfg/basis.data(コンフィグファイル)
+		 */
+
+		/* dataディレクトリの作成 */
+		File DataDir = new File(strDataDir);
+		DataDir.mkdirs();
+		String FullPath = strOutputDir.toString();
+		int nLast = FullPath.length();
+		if(nLast > 0 && FullPath.substring(FullPath.length() - 1) == "/")
+		{
+			FullPath = FullPath.substring(0,FullPath.length()-1);
+		}
+		String [] Dirs = FullPath.split("/");
+		nLast = Dirs.length;
+		strYoloExportDirName = Dirs[nLast-1];
+
+		/* cfgディレクトリの作成 */
+		File CfgDir = new File(strCfgDir);
+		CfgDir.mkdirs();
+
+		/* backupディレクトリの作成 */
+		File backupdir = new File(strBkDir);
+		backupdir.mkdirs();
+
+		/* train.txtを開く */
+		PrintWriter TrainTxtWriter = null;
+		PrintWriter TestTxtWriter = null;
+		try
+		{
+			String strUUID = UUID.randomUUID().toString();
+			String strTrainTxt = String.format("%s/%s_train.txt", strOutputDir,strUUID);
+			String strTestTxt = String.format("%s/%s_test.txt", strOutputDir,strUUID);
+			File file = new File(strTrainTxt);
+			TrainTxtWriter = new PrintWriter(new BufferedWriter(new FileWriter(file)));
+			file = new File(strTestTxt);
+			TestTxtWriter = new PrintWriter(new BufferedWriter(new FileWriter(file)));
+
+			/* データを出力する */
+			BodtImageTable ImgTbl = BodtApp.db.GetImageTable();
+			int MaxID = ImgTbl.GetMaxImageID();
+			for(int ImageID = 1; ImageID <= MaxID; ImageID++)
+			{
+				strUUID = UUID.randomUUID().toString();
+
+				String strJpgName = "./"+strYoloExportDirName+"/data/"+strUUID;
+				String FullPathJpg = strDataDir + "/" + strUUID;
+				String FullPathTxt =  strDataDir + "/" + strUUID+".txt";
+
+
+				/* 画像テーブルから画像データを取得する */
+				BufferedImage image = ImgTbl.SelectImage(ImageID);
+				String extFileName = ImgTbl.SelectImageFileName(ImageID);
+				extFileName = extFileName.toUpperCase();
+				if(extFileName.endsWith(".JPG") ||extFileName.endsWith(".JPEG")) {
+					strJpgName = strJpgName + ".jpg";
+					FullPathJpg = FullPathJpg + ".jpg";
+				}
+				else if(extFileName.endsWith(".PNG")) {
+					strJpgName = strJpgName + ".png";
+					FullPathJpg = FullPathJpg + ".png";
+				}
+				else if(extFileName.endsWith(".GIF")) {
+					strJpgName = strJpgName + ".gif";
+					FullPathJpg = FullPathJpg + ".gif";
+				}
+
+
+				/* 座標データを出力する */
+				nRet = SaveRectTxtForM2Det(ImageID,image.getWidth(),image.getHeight(),FullPathTxt);
+				if(nRet == -1)
+				{
+					/* コール元ダイアログに表示するための画像ファイル名をセットする */
+					SetExportInfo(ImageID,strJpgName+"はスキップします");
+					File text = new File(FullPathTxt);
+					text.delete();
+					continue;
+				}
+				else
+				{
+					SetExportInfo(ImageID,strJpgName+"をエクスポートしました");
+				}
+
+				/* 画像データを出力する */
+				nRet = SaveImage(image,FullPathJpg);
+				if(nRet != 0)
+				{
+					JOptionPane.showMessageDialog(null, strJpgName+"が作成できません");
+				}
+
+				int nSel = rnd.nextInt(100);
+				/* データの8割くらいをトレーニングデータとする */
+				if(nSel < 90)
+				{
+					/* トレーニングファイルリストを出力する */
+					TrainTxtWriter.print(strJpgName+"\n");
+				}
+				else
+				{
+					/* 訓練用ファイルリストを出力する */
+					TestTxtWriter.print(strJpgName+"\n");
+				}
+			}
+			TrainTxtWriter.close();
+			TestTxtWriter.close();
+		}
+		catch (IOException e)
+		{
+			// TODO 自動生成された catch ブロック
+			e.printStackTrace();
+		}
+
+		/* カテゴリ一覧を出力する */
+		nRet = SaveCategoryTxtForYolo(strClassList);
+
+		/* コンフィグファイルを生成する */
+		nRet = SaveCfgFileForYolo(strYoloExportDirName,strCfgFile);
+
+
+		return nRet;
+	}
 	/**
 	 * 画像を保存する
 	 * @param image 画像のバイナリデータ
@@ -541,7 +692,7 @@ public class BodtDB {
 			{
 				/* 矩形の中心のX、Yと矩形の幅と高さを求めて正規化する */
 				Rectangle2D.Double r = d.GetRect();
-				if(r.getWidth() == -1 || r.getHeight() == -1)
+				if(r.getX() < 0. || r.getY() < 0.0 ||  r.getWidth() < 0.0 || r.getHeight() < 0.0)
 				{
 					nRet = -1;
 					break;
@@ -550,7 +701,12 @@ public class BodtDB {
 				double c_y = r.getCenterY()/s_h;
 				double c_w = r.getWidth()/s_w;
 				double c_h = r.getHeight()/s_h;
+
+
 				int cat = d.GetCategory()-1;
+				if(cat < 0) {
+					continue;
+				}
 				String Record = cat + " " + c_x + " " + c_y + " " + c_w + " " + c_h;
 				/* ファイルに書き込む */
 				pw.print(Record+"\n");
@@ -566,6 +722,66 @@ public class BodtDB {
 
 	return nRet;
 	}
+
+
+	/**
+	 * YOLO用の学習データを作成する
+	 * @param ImageID 作成したい画像ID
+	 * @param s_w オリジナル画像の幅
+	 * @param s_h オリジナル画像の高さ
+	 * @param strTxtFile 出力ファイル名
+	 * @return 0 書き込み成功
+	 *         -1 書き込み失敗
+	 */
+	private int SaveRectTxtForM2Det(int ImageID,float s_w,float s_h,String strTxtFile)
+	{
+		int nRet = 0;
+		BodtTrainDataTable TrainDataTbl = BodtApp.db.GetTrainDataTable();
+		File file = new File(strTxtFile);
+		NORMAL:try
+		{
+			List<BodtObjectData> ld = TrainDataTbl.Select(ImageID);
+			if(ld.size() == 0)
+			{
+				nRet = -1;
+				break NORMAL;
+			}
+			PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(file)));
+			int err = 0;
+			for(BodtObjectData d: ld)
+			{
+				/* 矩形の中心のX、Yと矩形の幅と高さを求めて正規化する */
+				Rectangle2D.Double r = d.GetRect();
+				if(r.getX() < 0. || r.getY() < 0.0 ||  r.getWidth() < 0.0 || r.getHeight() < 0.0)
+				{
+					nRet = -1;
+					break;
+				}
+				//アノテーションは、left,top,right,bottom、categoryの番号で出力する
+				double left = r.x;
+				double top = r.y;
+				double right = left + r.width;
+				double bottom = top + r.height;
+				int cat = d.GetCategory()-1;
+				if(cat < 0) {
+					continue;
+				}
+				String Record = String.valueOf(left) + "," + top + "," + right + "," + bottom + "," + cat;
+				/* ファイルに書き込む */
+				pw.print(Record+"\n");
+			}
+			pw.close();
+		}
+		catch (IOException e)
+		{
+			// TODO 自動生成された catch ブロック
+			e.printStackTrace();
+			nRet = -1;
+		}
+
+	return nRet;
+	}
+
 
 	/**
 	 * カテゴリリストを作成する
