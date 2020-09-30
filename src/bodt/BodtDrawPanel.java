@@ -505,7 +505,15 @@ public class BodtDrawPanel extends JPanel implements MouseListener,MouseMotionLi
 	{
 		int w = (int) (src_img.getWidth() * scale);
 		int h =  (int) (src_img.getHeight() * scale);
-		BufferedImage dst_img = new BufferedImage(w,h, m_OriginalImg.getType());
+		BufferedImage dst_img = null;
+		try {
+			dst_img = new BufferedImage(w,h, m_OriginalImg.getType());
+		}
+		catch(Exception e) {
+			dst_img = new BufferedImage(w,h, BufferedImage.TYPE_INT_BGR);
+		}
+
+
 		dst_img.getGraphics().drawImage(src_img.getScaledInstance(w, h, Image.SCALE_AREA_AVERAGING), 0, 0, w, h, null);
 		return dst_img;
 	}

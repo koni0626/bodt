@@ -309,6 +309,8 @@ public class BodtDB {
 	public int ExportDBToYolo(String strOutputDir)
 	{
 		int nRet = 0;
+		//strOutputDir = "/home/darknet/<change_dir_name>";
+
 		String strDataDir = strOutputDir + "/data";
 		String strCfgDir = strOutputDir + "/cfg";
 		String strBkDir = strOutputDir + "/backup";
@@ -359,8 +361,8 @@ public class BodtDB {
 		try
 		{
 			String strUUID = UUID.randomUUID().toString();
-			String strTrainTxt = String.format("%s/%s_train.txt", strOutputDir,strUUID);
-			String strTestTxt = String.format("%s/%s_test.txt", strOutputDir,strUUID);
+			String strTrainTxt = String.format("%s/train.txt", strOutputDir);
+			String strTestTxt = String.format("%s/test.txt", strOutputDir);
 			File file = new File(strTrainTxt);
 			TrainTxtWriter = new PrintWriter(new BufferedWriter(new FileWriter(file)));
 			file = new File(strTestTxt);
@@ -373,9 +375,9 @@ public class BodtDB {
 			{
 				strUUID = UUID.randomUUID().toString();
 
-				String strJpgName = "./"+strYoloExportDirName+"/data/"+strUUID;
-				String FullPathJpg = strDataDir + "/" + strUUID;
-				String FullPathTxt =  strDataDir + "/" + strUUID+".txt";
+				String strJpgName = "/home/darknet/baps3/data/"+strUUID;
+				String FullPathJpg = strOutputDir+"/data/" + strUUID;
+				String FullPathTxt =   strOutputDir+"/data/" + strUUID +".txt";
 
 
 				/* 画像テーブルから画像データを取得する */
@@ -843,10 +845,41 @@ public class BodtDB {
 			/* クラス数取得 */
 			int nClassNum = BodtApp.db.GetCategoryTable().SelectAll().size();
 			pw.print("classes="+nClassNum+"\n");
-			pw.print("train  = ./"+Path+"/train.txt\n");
-			pw.print("valid  = ./"+Path+"/test.txt\n");
-			pw.print("names  = ./"+Path+"/cfg/basis.names\n");
-			pw.print("backup  = ./"+Path+"/backup\n");
+			pw.print("train  = /home/darknet/baps3/train.txt\n");
+			pw.print("valid  = /home/darknet/baps3/test.txt\n");
+			pw.print("names  = /home/darknet/baps3/cfg/basis.names\n");
+			pw.print("backup  = /home/darknet/baps3/backup\n");
+			pw.close();
+			SaveSettingFileForYolo(Path, nClassNum);
+
+		}
+		catch (IOException e)
+		{
+			// TODO 自動生成された catch ブロック
+			e.printStackTrace();
+			nRet = -1;
+		}
+
+
+
+		return nRet;
+	}
+
+	private int SaveSettingFileForYolo(String Path, int classNum) {
+
+		int nRet = 0;
+		int outputCell = 3 * (classNum + 5);
+		String template = yolov3Cfg.cfg;
+		template = template.replace("@class_num@", String.valueOf(classNum));
+		template = template.replace("@output@", String.valueOf(outputCell));
+
+		File file = new File(Path + "/cfg/yolov3.cfg");
+
+		try
+		{
+			PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(file)));
+			/* クラス数取得 */
+			pw.print(template);
 			pw.close();
 
 		}
@@ -856,6 +889,8 @@ public class BodtDB {
 			e.printStackTrace();
 			nRet = -1;
 		}
+
+
 
 		return nRet;
 	}
