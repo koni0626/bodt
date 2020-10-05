@@ -29,6 +29,7 @@ public class BodtExportDialog extends JDialog{
 	public static final int EXPORT_YOLO = 0;
 	public static final int EXPORT_CLASS = 1;
 	public static final int EXPORT_M2DET = 2;
+	public static final int EXPORT_EFFICIENTDET = 3;
 	/**
 	 * Launch the application.
 	 */
@@ -132,6 +133,11 @@ public class BodtExportDialog extends JDialog{
 										nFileNum = BodtApp.db.GetImageTable().GetMaxImageID();
 										m_ProgressBar.setMaximum(nFileNum);
 										BodtApp.db.ExportDBToM2Det(strOutputDir);
+										break;
+									case EXPORT_EFFICIENTDET:
+										nFileNum = BodtApp.db.GetImageTable().GetMaxImageID();
+										m_ProgressBar.setMaximum(nFileNum);
+										BodtApp.db.ExportDBToEfficientDet(strOutputDir);
 										break;
 
 									default:

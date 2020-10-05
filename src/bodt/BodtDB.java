@@ -602,6 +602,167 @@ public class BodtDB {
 		return nRet;
 	}
 	/**
+	 * EfficientDet学習用のデータセットをエクスポートする
+	 * @param strOutputDir 出力先ディレクトリ
+	 * @return :0正常
+	 *          -1失敗
+	 */
+	public int ExportDBToEfficientDet(String strOutputDir)
+	{
+		int nRet = 0;
+
+		String strAnnotationDir = strOutputDir + "/annotations";
+		String strTestDir = strOutputDir + "/test_data";
+		String strTrainDir = strOutputDir + "/train_data";
+		String strEffiExportDirName = "";
+		String strClassList = strOutputDir + "/classes.txt";
+
+		if(m_Con == null)
+		{
+			JOptionPane.showMessageDialog(null, "データベースを作成するか，オープンしてください");
+			return -1;
+		}
+		Random rnd = new Random();
+
+		String FullPath = strOutputDir.toString();
+		int nLast = FullPath.length();
+		if(nLast > 0 && FullPath.substring(FullPath.length() - 1) == "/")
+		{
+			FullPath = FullPath.substring(0,FullPath.length()-1);
+		}
+		String [] Dirs = FullPath.split("/");
+		nLast = Dirs.length;
+		strEffiExportDirName = Dirs[nLast-1];
+		
+		/* annotationディレクトリの作成 */
+		File AnnotationDir = new File(strAnnotationDir);
+		AnnotationDir.mkdirs();
+
+		/* test_dataディレクトリの作成 */
+		File TestDir = new File(strTestDir);
+		TestDir.mkdirs();
+		
+		/* train_dataディレクトリの作成 */
+		File TrainDir = new File(strTrainDir);
+		TrainDir.mkdirs();
+
+		
+		/* train_annotation.txt, text_annotation.txtを開く */
+		PrintWriter TrainTxtWriter = null;
+		PrintWriter TestTxtWriter = null;
+		try
+		{
+			String strTrainTxt = String.format("%s/train_annotation.txt", strOutputDir);
+			String strTestTxt = String.format("%s/test_annotation.txt", strOutputDir);
+			File Trainfile = new File(strTrainTxt);
+			TrainTxtWriter = new PrintWriter(new BufferedWriter(new FileWriter(Trainfile)));
+			File Testfile = new File(strTestTxt);
+			TestTxtWriter = new PrintWriter(new BufferedWriter(new FileWriter(Testfile)));
+
+			/* データを出力する */
+			BodtImageTable ImgTbl = BodtApp.db.GetImageTable();
+			int MaxID = ImgTbl.GetMaxImageID();
+			for(int ImageID = 1; ImageID <= MaxID; ImageID++)
+			{
+				int nSel = rnd.nextInt(100);
+				String strUUID = UUID.randomUUID().toString();
+				String strUUIDName = "";
+				BufferedImage image = ImgTbl.SelectImage(ImageID);
+				String extFileName = ImgTbl.SelectImageFileName(ImageID);
+				extFileName = extFileName.toUpperCase();
+				
+				if(nSel < 90)
+				{
+					String strTrainJpgName = "./"+strEffiExportDirName+"/train_data/"+strUUID;
+					String FullPathTrainJpg = strTrainDir + "/" + strUUID;
+					if(extFileName.endsWith(".JPG") ||extFileName.endsWith(".JPEG")) {
+						strTrainJpgName = strTrainJpgName + ".jpg";
+						FullPathTrainJpg = FullPathTrainJpg + ".jpg";
+						strUUIDName = strUUID + ".jpg";
+						
+					}
+					else if(extFileName.endsWith(".PNG")) {
+						strTrainJpgName = strTrainJpgName + ".png";
+						FullPathTrainJpg = FullPathTrainJpg + ".png";
+						strUUIDName = strUUID + ".png";
+					}
+					else if(extFileName.endsWith(".GIF")) {
+						strTrainJpgName = strTrainJpgName + ".gif";
+						FullPathTrainJpg = FullPathTrainJpg + ".gif";
+						strUUIDName = strUUID + ".gif";
+					}
+					/* 座標データを出力する */
+					nRet = SaveRectTxtForEfficientDet(ImageID,image.getWidth(),image.getHeight(),TrainTxtWriter, strUUIDName);
+					if(nRet == -1)
+					{
+						/* コール元ダイアログに表示するための画像ファイル名をセットする */
+						SetExportInfo(ImageID,strTrainJpgName+"はスキップします");
+					}
+					else
+					{
+						SetExportInfo(ImageID,strTrainJpgName+"をエクスポートしました");
+					}
+					/* 画像データを出力する */
+					nRet = SaveImage(image,FullPathTrainJpg);
+					if(nRet != 0)
+					{
+						JOptionPane.showMessageDialog(null, strTrainJpgName+"が作成できません");
+					}
+				}
+				else
+				{
+					String strTestJpgName = "./"+strEffiExportDirName+"/test_data/"+strUUID;
+					String FullPathTestJpg = strTestDir + "/" + strUUID;
+					if(extFileName.endsWith(".JPG") ||extFileName.endsWith(".JPEG")) {
+						strTestJpgName = strTestJpgName + ".jpg";
+						FullPathTestJpg = FullPathTestJpg + ".jpg";
+						strUUIDName = strUUID + ".jpg";
+					}
+					else if(extFileName.endsWith(".PNG")) {
+						strTestJpgName = strTestJpgName + ".png";
+						FullPathTestJpg = FullPathTestJpg + ".png";
+						strUUIDName = strUUID + ".png";
+					}
+					else if(extFileName.endsWith(".GIF")) {
+						strTestJpgName = strTestJpgName + ".gif";
+						FullPathTestJpg = FullPathTestJpg + ".gif";
+						strUUIDName = strUUID + ".gif";
+					}
+					/* 座標データを出力する */
+					nRet = SaveRectTxtForEfficientDet(ImageID,image.getWidth(),image.getHeight(),TestTxtWriter, strUUIDName);
+					if(nRet == -1)
+					{
+						/* コール元ダイアログに表示するための画像ファイル名をセットする */
+						SetExportInfo(ImageID,strTestJpgName+"はスキップします");
+					}
+					else
+					{
+						SetExportInfo(ImageID,strTestJpgName+"をエクスポートしました");
+					}
+					/* 画像データを出力する */
+					nRet = SaveImage(image,FullPathTestJpg);
+					if(nRet != 0)
+					{
+						JOptionPane.showMessageDialog(null, strTestJpgName+"が作成できません");
+					}
+				}
+
+			}
+			TrainTxtWriter.close();
+			TestTxtWriter.close();
+		}
+		catch (IOException e)
+		{
+			// TODO 自動生成された catch ブロック
+			e.printStackTrace();
+		}
+
+		/* カテゴリ一覧を出力する Need to change*/
+		nRet = SaveCategoryTxtForEfficientDet(strClassList);
+		
+		return nRet;
+	}
+	/**
 	 * 画像を保存する
 	 * @param image 画像のバイナリデータ
 	 * @param strJpgName 出力先ファイル名
@@ -749,7 +910,6 @@ public class BodtDB {
 				break NORMAL;
 			}
 			PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(file)));
-			int err = 0;
 			for(BodtObjectData d: ld)
 			{
 				/* 矩形の中心のX、Yと矩形の幅と高さを求めて正規化する */
@@ -783,6 +943,40 @@ public class BodtDB {
 
 	return nRet;
 	}
+	
+	private int SaveRectTxtForEfficientDet(int ImageID,float s_w,float s_h,PrintWriter pw, String strUUIDName)
+	{
+		int nRet = 0;
+		BodtTrainDataTable TrainDataTbl = BodtApp.db.GetTrainDataTable();
+		List<BodtObjectData> ld = TrainDataTbl.Select(ImageID);
+		if(ld.size() == 0)
+		{
+			nRet = -1;
+		}
+		for(BodtObjectData d: ld)
+		{
+			/* 矩形の中心のX、Yと矩形の幅と高さを求めて正規化する */
+			Rectangle2D.Double r = d.GetRect();
+			if(r.getX() < 0. || r.getY() < 0.0 ||  r.getWidth() < 0.0 || r.getHeight() < 0.0)
+			{
+				nRet = -1;
+				break;
+			}
+			//アノテーションは、filename,category,left,top,width,heightの番号で出力する
+			double left = r.x;
+			double top = r.y;
+			double width = r.width;
+			double height = r.height;
+			int cat = d.GetCategory()-1;
+			if(cat < 0) {
+				continue;
+			}
+			String Record = String.valueOf(strUUIDName) + " " + cat + " " + left +" " + top + " " + width + " " + height;
+			/* ファイルに書き込む */
+			pw.print(Record+"\n");
+		}
+	return nRet;
+	}
 
 
 	/**
@@ -803,6 +997,38 @@ public class BodtDB {
 			for(String s : CatList)
 			{
 				pw.print(s+"\n");
+			}
+
+			pw.close();
+		}
+		catch (IOException e)
+		{
+			// TODO 自動生成された catch ブロック
+			e.printStackTrace();
+			nRet = -1;
+		}
+
+		return nRet;
+	}
+	
+	/**
+	 * カテゴリリストを作成する
+	 * @param FileName:出力先ファイル名
+	 * @return 0:正常
+	 *         -1:書き込み失敗
+	 */
+	private int SaveCategoryTxtForEfficientDet(String FileName)
+	{
+		BodtCategoryTable CatTbl = BodtApp.db.GetCategoryTable();
+		File file = new File(FileName);
+		int nRet = 0;
+		try
+		{
+			List<String> CatList = CatTbl.SelectAll();
+			PrintWriter pw = new PrintWriter(new BufferedWriter(new FileWriter(file)));
+			for(String s : CatList)
+			{
+				pw.print(s+" ");
 			}
 
 			pw.close();
