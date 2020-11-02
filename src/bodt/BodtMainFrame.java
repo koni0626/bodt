@@ -303,6 +303,16 @@ public class BodtMainFrame extends JFrame implements KeyListener{
 				m_DrawPanel.OnPressRotateKey();
 			}
 		}));
+
+		JButton MoveButton = new JButton("移動");
+		MoveButton.addActionListener((new ActionListener(){
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// TODO 自動生成されたメソッド・スタブ
+				int imgID = m_DrawPanel.OnPressMoveKey();
+				String FileName = BodtApp.db.GetImageTable().SelectFileName(imgID);
+			}
+		}));
 		ButtonPanel.add(PrevButton);
 		ButtonPanel.add(ClearButton);
 		ButtonPanel.add(EnterButton);
@@ -310,6 +320,7 @@ public class BodtMainFrame extends JFrame implements KeyListener{
 		ButtonPanel.add(InfoButton);
 		ButtonPanel.add(NextButton);
 		ButtonPanel.add(RotateButton);
+		ButtonPanel.add(MoveButton);
 		CenterPanel.add(ButtonPanel);
 	}
 

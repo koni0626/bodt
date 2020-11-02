@@ -713,7 +713,8 @@ public class BodtDrawPanel extends JPanel implements MouseListener,MouseMotionLi
 	public void OnPressKeyInfo()
 	{
 		BodtTrainDataTable train_table = BodtApp.db.GetTrainDataTable();
-		int Now = train_table.SearchImageID(m_ImageID);
+		// int Now = train_table.SearchImageID(m_ImageID);
+		int Now = m_ImageID;
 		int Max = BodtApp.db.GetImageTable().GetMaxImageID();
 		JOptionPane.showMessageDialog(null, String.format("現在の進捗\n%d/%d", Now,Max));
 	}
@@ -743,6 +744,44 @@ public class BodtDrawPanel extends JPanel implements MouseListener,MouseMotionLi
 
 		repaint();
 
+	}
+
+	public int OnPressMoveKey()
+	{
+		String sImage_ID = JOptionPane.showInputDialog("Image IDを入力");
+		m_ImageID = Integer.parseInt(sImage_ID);
+		
+		m_MaxImgID = BodtApp.db.GetImageTable().GetMaxImageID();
+		
+		if((m_ImageID - 1) >= m_MinImgID && (m_ImageID+ 1) <= m_MaxImgID)
+		{
+			m_OriginalImg = BodtApp.db.GetImageTable().SelectImage(m_ImageID);
+			/* 画像サイズを調節 */
+			AdjustScale();
+
+			/* オリジナル画像をレンダリングイメージにコピー */
+			m_RenderImg = ImageScale(m_OriginalImg,m_Scale);
+			/* 矩形領域取得 */
+			List<BodtObjectData> ObjectList = BodtApp.db.GetTrainDataTable().Select(m_ImageID);
+			m_RenderRect = new ArrayList<BodtObjectData>();
+			for(BodtObjectData d:ObjectList)
+			{
+				BodtObjectData data = new BodtObjectData();
+				Rectangle2D.Double r = d.GetRect();
+				/* オリジナル画像の中心位置 */
+				r = RectScale(r,m_Scale);
+				data.Set(d.GetCategory(),r);
+
+				m_RenderRect.add(data);
+			}
+			/* 描画途中の矩形は消す */
+			m_DrawRect = new Rectangle2D.Double(NON_WRITE_RECT,NON_WRITE_RECT,NON_WRITE_RECT,NON_WRITE_RECT);
+
+			repaint();
+			this.getParent().repaint();
+		}
+		
+		return m_ImageID;
 	}
 	/**
 	 * マウスホイールが押されたときにコールされる。
